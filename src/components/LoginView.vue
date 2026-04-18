@@ -104,7 +104,7 @@ const handleAuth = async () => {
   }
 
   try {
-    const res = await fetch(`https://bookstore-backend-60vr.onrender.com/${endpoint}`, {
+    const res = await fetch(`https://bookstore-backend-60vr.onrender.com${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
