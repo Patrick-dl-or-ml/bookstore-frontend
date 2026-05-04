@@ -83,10 +83,19 @@
           </div>
 
           <div class="flex items-center space-x-12">
+            <!-- 👇 修改了这里：加入了库存预警判断和红色UI 👇 -->
             <div class="text-right">
               <p class="text-xl font-black text-gray-900">¥{{ book.price }}</p>
-              <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{{ book.stock }} in Stock</p>
+              <div class="flex items-center justify-end space-x-2 mt-1">
+                <span v-if="book.stock < 50" class="px-2 py-0.5 bg-red-100 text-red-600 text-[9px] font-black uppercase tracking-widest rounded-md animate-pulse">
+                  ⚠️ 需补货
+                </span>
+                <p class="text-[10px] font-black uppercase tracking-tighter" :class="book.stock < 50 ? 'text-red-500' : 'text-gray-400'">
+                  {{ book.stock }} in Stock
+                </p>
+              </div>
             </div>
+            <!-- 👆 修改结束 👆 -->
             <div class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" /></svg>
             </div>
@@ -200,7 +209,8 @@ const handleCreate = async () => {
 };
 
 const handleUpdate = async () => {
-  const res = await fetch(`https://bookstore-backend-60vr.onrender.com/${selectedBook.value.book_id}`, {
+  // 修正了缺少 /api/admin/books 的路由错误
+  const res = await fetch(`https://bookstore-backend-60vr.onrender.com/api/admin/books/${selectedBook.value.book_id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(editForm.value)
@@ -210,7 +220,8 @@ const handleUpdate = async () => {
 
 const handleDelete = async () => {
   if (!confirm('Permanently remove this book?')) return;
-  const res = await fetch(`https://bookstore-backend-60vr.onrender.com/${selectedBook.value.book_id}`, { method: 'DELETE' });
+  // 修正了缺少 /api/admin/books 的路由错误
+  const res = await fetch(`https://bookstore-backend-60vr.onrender.com/api/admin/books/${selectedBook.value.book_id}`, { method: 'DELETE' });
   if ((await res.json()).success) { selectedBook.value = null; fetchBooks(); }
 };
 

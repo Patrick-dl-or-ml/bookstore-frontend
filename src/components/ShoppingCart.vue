@@ -40,16 +40,39 @@
         </ul>
       </div>
 
-      <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between">
-        <div>
-          <p class="text-sm text-gray-500 font-medium mb-1">Subtotal (Shipping: ¥10.00)</p>
-          <p class="text-3xl font-black text-gray-900">¥{{ (subtotal + 10).toFixed(2) }}</p>
+      <!-- 👇 重新设计的结算区域 👇 -->
+      <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 flex flex-col space-y-6">
+
+        <!-- 🌟新增：VIP 专属折扣提示横幅 -->
+        <div v-if="vipInfo.rate < 1" :class="['rounded-2xl p-4 flex items-center justify-between border', vipInfo.bg, vipInfo.border]">
+          <div class="flex items-center space-x-3">
+            <span class="text-2xl">✨</span>
+            <div>
+              <p :class="['text-sm font-black uppercase tracking-widest', vipInfo.color]">{{ vipInfo.name }} Privilege</p>
+              <p :class="['text-xs font-bold mt-0.5 opacity-80', vipInfo.color]">Automatic {{ ((1 - vipInfo.rate) * 100).toFixed(0) }}% OFF applied</p>
+            </div>
+          </div>
+          <span :class="['text-xl font-black', vipInfo.color]">- ¥{{ savedAmount.toFixed(2) }}</span>
         </div>
-        <button @click="checkout" :disabled="isCheckingOut"
-                class="px-8 py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-indigo-600 transition-all shadow-lg shadow-gray-200 disabled:bg-gray-300">
-          {{ isCheckingOut ? 'Processing...' : 'Checkout Now' }}
-        </button>
+
+        <div class="flex items-end justify-between border-t border-gray-100 pt-6">
+          <div>
+            <p class="text-sm text-gray-500 font-medium mb-1">
+              <span v-if="vipInfo.rate < 1" class="line-through text-gray-400 mr-2">¥{{ subtotal.toFixed(2) }}</span>
+              Subtotal (Shipping: ¥10.00)
+            </p>
+            <div class="flex items-end space-x-2">
+              <span class="text-3xl font-black text-gray-900">¥{{ finalTotal.toFixed(2) }}</span>
+            </div>
+          </div>
+          <button @click="checkout" :disabled="isCheckingOut || cartItems.length === 0"
+                  class="px-8 py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-indigo-600 transition-all shadow-lg shadow-gray-200 disabled:bg-gray-300 disabled:shadow-none">
+            {{ isCheckingOut ? 'Processing...' : 'Checkout Now' }}
+          </button>
+        </div>
       </div>
+      <!-- 👆 结算区域修改结束 👆 -->
+
     </div>
   </div>
 </template>
@@ -59,23 +82,33 @@ import { ref, computed, onMounted } from 'vue';
 
 const cartItems = ref([]);
 const isCheckingOut = ref(false);
+const currentUser = ref({ id: 1, vip_level: 0 }); // 默认 fallback
 
-const getCurrentUserId = () => {
+// 🌟新增：获取本地缓存的用户信息，提取会员等级
+const initUser = () => {
   const savedUser = localStorage.getItem('user');
-  return savedUser ? JSON.parse(savedUser).id : 1;
+  if (savedUser) {
+    currentUser.value = JSON.parse(savedUser);
+  }
 };
 
 // 获取购物车
 const fetchCart = async () => {
-  const userId = getCurrentUserId();
-  const res = await fetch(`https://bookstore-backend-60vr.onrender.com/api/cart/${userId}`);
+  const res = await fetch(`https://bookstore-backend-60vr.onrender.com/api/cart/${currentUser.value.id}`);
   const result = await res.json();
   if (result.success) cartItems.value = result.data;
 };
 
-// 🌟 核心升级：修改数量
+// 🌟新增：计算 VIP 对应的文案、折扣率和主题色
+const vipInfo = computed(() => {
+  const level = currentUser.value.vip_level || 0;
+  if (level === 3) return { name: 'Diamond', rate: 0.85, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' };
+  if (level === 2) return { name: 'Gold', rate: 0.90, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' };
+  if (level === 1) return { name: 'Silver', rate: 0.95, color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-200' };
+  return { name: 'Standard', rate: 1.0, color: 'text-gray-600', bg: 'bg-transparent', border: 'border-transparent' };
+});
+
 const updateQuantity = async (cartId, newQuantity) => {
-  // 如果减到 0 提示确认
   if (newQuantity === 0 && !confirm('Are you sure you want to remove this book?')) return;
 
   try {
@@ -84,14 +117,25 @@ const updateQuantity = async (cartId, newQuantity) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ quantity: newQuantity })
     });
-    if ((await res.json()).success) fetchCart(); // 刷新数据
+    if ((await res.json()).success) fetchCart();
   } catch (err) {
     console.error('Update failed');
   }
 };
 
+// 原始总价（商品数量 * 单价）
 const subtotal = computed(() => {
   return cartItems.value.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+});
+
+// 🌟新增：为你省下的金额
+const savedAmount = computed(() => {
+  return subtotal.value * (1 - vipInfo.value.rate);
+});
+
+// 🌟新增：打折后 + 运费的最终价格
+const finalTotal = computed(() => {
+  return (subtotal.value * vipInfo.value.rate) + 10;
 });
 
 // 结算
@@ -101,18 +145,25 @@ const checkout = async () => {
     const res = await fetch('https://bookstore-backend-60vr.onrender.com/api/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ consumer_id: getCurrentUserId() })
+      body: JSON.stringify({ consumer_id: currentUser.value.id })
     });
-    if ((await res.json()).success) {
-      alert('🎉 Order placed successfully!');
+
+    const result = await res.json();
+    if (result.success) {
+      alert(`🎉 Order placed successfully! ${result.message || ''}`);
       fetchCart();
+    } else {
+      alert(`Checkout failed: ${result.message}`);
     }
   } catch (err) {
-    alert('Checkout failed');
+    alert('Checkout failed: Network error');
   } finally {
     isCheckingOut.value = false;
   }
 };
 
-onMounted(fetchCart);
+onMounted(() => {
+  initUser();
+  fetchCart();
+});
 </script>
