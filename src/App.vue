@@ -12,7 +12,7 @@
               <button @click="currentView = 'store'" :class="[currentView === 'store' ? 'border-indigo-600 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900', 'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-bold transition-all']">Store</button>
               <button @click="currentView = 'cart'" :class="[currentView === 'cart' ? 'border-indigo-600 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900', 'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-bold transition-all']">My Cart</button>
 
-              <!-- 👇 新增：普通用户查看自己订单的入口 👇 -->
+              <!-- 👇 这里的 currentView = 'history' 会触发下方的 MyOrders 组件 👇 -->
               <button @click="currentView = 'history'" :class="[currentView === 'history' ? 'border-indigo-600 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900', 'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-bold transition-all']">My Orders</button>
 
               <button v-if="currentUser.role === 'admin'" @click="currentView = 'manage'"
@@ -52,8 +52,8 @@
           <BookStore v-if="currentView === 'store'" />
           <ShoppingCart v-else-if="currentView === 'cart'" />
 
-          <!-- 👇 新增：渲染个人订单组件 👇 -->
-          <MyOrders v-else-if="currentView === 'history'" />
+          <!-- 👇 核心修改：增加了 @change-view 监听，确保组件内部的跳转能生效 👇 -->
+          <MyOrders v-else-if="currentView === 'history'" @change-view="(view) => currentView = view" />
 
           <UserProfile v-else-if="currentView === 'profile'" />
           <AdminDashboard v-else-if="currentView === 'admin' && currentUser.role === 'admin'" />
@@ -77,7 +77,6 @@ import UserProfile from './components/UserProfile.vue'
 import AdminBooks from './components/AdminBooks.vue'
 import AdminUsers from './components/AdminUsers.vue'
 import AdminOrders from './components/AdminOrders.vue'
-// 👇 新增：引入 MyOrders 组件 👇
 import MyOrders from './components/MyOrders.vue'
 
 const isLoggedIn = ref(false)

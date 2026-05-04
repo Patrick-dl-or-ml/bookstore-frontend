@@ -9,9 +9,12 @@
       <div class="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
     </div>
 
+    <!-- 👇 修改点：去掉了 router-link，改为点击事件切换 currentView -->
     <div v-else-if="orders.length === 0" class="bg-white p-20 text-center rounded-[2.5rem] border border-dashed border-gray-200">
       <p class="text-gray-400 font-bold text-lg">You haven't placed any orders yet.</p>
-      <router-link to="/" class="text-indigo-600 font-black uppercase text-xs tracking-widest mt-4 inline-block hover:underline">Go to Store</router-link>
+      <button @click="$emit('change-view', 'store')" class="text-indigo-600 font-black uppercase text-xs tracking-widest mt-4 inline-block hover:underline cursor-pointer">
+        Go to Store
+      </button>
     </div>
 
     <div v-else class="space-y-8">
@@ -69,7 +72,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, defineEmits } from 'vue';
+
+// 定义通知父组件切换视图的事件
+defineEmits(['change-view']);
 
 const orders = ref([]);
 const isLoading = ref(true);
