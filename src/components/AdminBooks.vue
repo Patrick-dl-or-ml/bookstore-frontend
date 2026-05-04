@@ -87,10 +87,10 @@
             <div class="text-right">
               <p class="text-xl font-black text-gray-900">¥{{ book.price }}</p>
               <div class="flex items-center justify-end space-x-2 mt-1">
-                <span v-if="book.stock < 50" class="px-2 py-0.5 bg-red-100 text-red-600 text-[9px] font-black uppercase tracking-widest rounded-md animate-pulse">
+                <span v-if="book.stock < 5" class="px-2 py-0.5 bg-red-100 text-red-600 text-[9px] font-black uppercase tracking-widest rounded-md animate-pulse">
                   ⚠️ 需补货
                 </span>
-                <p class="text-[10px] font-black uppercase tracking-tighter" :class="book.stock < 50 ? 'text-red-500' : 'text-gray-400'">
+                <p class="text-[10px] font-black uppercase tracking-tighter" :class="book.stock < 5 ? 'text-red-500' : 'text-gray-400'">
                   {{ book.stock }} in Stock
                 </p>
               </div>

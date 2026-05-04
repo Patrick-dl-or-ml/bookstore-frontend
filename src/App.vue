@@ -12,6 +12,9 @@
               <button @click="currentView = 'store'" :class="[currentView === 'store' ? 'border-indigo-600 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900', 'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-bold transition-all']">Store</button>
               <button @click="currentView = 'cart'" :class="[currentView === 'cart' ? 'border-indigo-600 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900', 'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-bold transition-all']">My Cart</button>
 
+              <!-- 👇 新增：普通用户查看自己订单的入口 👇 -->
+              <button @click="currentView = 'history'" :class="[currentView === 'history' ? 'border-indigo-600 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900', 'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-bold transition-all']">My Orders</button>
+
               <button v-if="currentUser.role === 'admin'" @click="currentView = 'manage'"
                       :class="[currentView === 'manage' ? 'border-indigo-600 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900', 'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-bold transition-all']">
                 Inventory
@@ -48,6 +51,10 @@
         <div v-else>
           <BookStore v-if="currentView === 'store'" />
           <ShoppingCart v-else-if="currentView === 'cart'" />
+
+          <!-- 👇 新增：渲染个人订单组件 👇 -->
+          <MyOrders v-else-if="currentView === 'history'" />
+
           <UserProfile v-else-if="currentView === 'profile'" />
           <AdminDashboard v-else-if="currentView === 'admin' && currentUser.role === 'admin'" />
           <AdminBooks v-else-if="currentView === 'manage' && currentUser.role === 'admin'" />
@@ -70,6 +77,8 @@ import UserProfile from './components/UserProfile.vue'
 import AdminBooks from './components/AdminBooks.vue'
 import AdminUsers from './components/AdminUsers.vue'
 import AdminOrders from './components/AdminOrders.vue'
+// 👇 新增：引入 MyOrders 组件 👇
+import MyOrders from './components/MyOrders.vue'
 
 const isLoggedIn = ref(false)
 const currentUser = ref({})
