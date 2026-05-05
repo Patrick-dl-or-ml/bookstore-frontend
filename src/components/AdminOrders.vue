@@ -53,6 +53,14 @@
               </span>
             </div>
 
+            <!-- 🌟 新增：删除操作，对应 3.2.2.1 需求 -->
+            <button
+                @click.stop="deleteOrder(order.sale_id)"
+                class="mt-2 px-3 py-1 bg-red-50 text-red-600 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all border border-red-100"
+            >
+              Delete Order
+            </button>
+
             <div class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" /></svg>
             </div>
@@ -82,11 +90,25 @@
               <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Order #{{ String(selectedOrder.sale_id).padStart(5, '0') }}</p>
             </div>
 
-            <div class="flex-1 space-y-6">
+            <div class="flex-1 space-y-6 overflow-y-auto pr-2 custom-scrollbar">
               <div class="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm">
                 <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">Shipping Destination (Snapshot)</p>
-                <div class="text-sm font-bold text-gray-700 whitespace-pre-wrap leading-relaxed">
+                <div class="text-sm font-bold text-gray-700 whitespace-pre-wrap leading-relaxed mb-4">
                   {{ selectedOrder.address_snapshot || 'No shipping address recorded.' }}
+                </div>
+
+                <!-- 🌟 嵌入：实时修改地址功能 (3.2.2.1) -->
+                <div class="pt-4 border-t border-dashed border-gray-100">
+                  <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Update Address</p>
+                  <textarea
+                      v-model="selectedOrder.delivery_address"
+                      rows="2"
+                      class="w-full p-3 text-[11px] font-bold text-gray-700 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none transition-all"
+                      placeholder="Enter new address..."></textarea>
+                  <button @click="updateOrderBaseInfo"
+                          class="mt-2 w-full py-2 bg-indigo-50 text-indigo-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all">
+                    Apply Changes
+                  </button>
                 </div>
               </div>
 
@@ -130,7 +152,16 @@
                   <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Unit: ¥{{ item.unit_price }}</p>
                 </div>
                 <div class="text-right ml-4">
-                  <p class="text-sm font-black text-gray-900">x{{ item.quantity }}</p>
+                  <!-- 🌟 嵌入：修改数量逻辑，自动联动总额重算 (3.2.2.1) -->
+                  <div class="flex items-center space-x-2 justify-end mb-1">
+                    <span class="text-[9px] font-black text-gray-400">QTY</span>
+                    <input
+                        type="number"
+                        v-model="item.quantity"
+                        @change="changeDetailQty(selectedOrder.sale_id, item.detail_id, item.quantity)"
+                        class="w-12 p-1 bg-gray-50 border border-gray-100 rounded text-center text-[11px] font-black text-gray-900 outline-none focus:border-indigo-400"
+                    />
+                  </div>
                   <p class="text-sm font-black text-indigo-600 mt-1">¥{{ (item.quantity * item.unit_price).toFixed(2) }}</p>
                 </div>
               </div>
@@ -231,6 +262,45 @@ const markAsShipped = async () => {
       fetchOrders();
     }
   } catch (err) { alert('Dispatch failed'); }
+};
+
+// 🌟 新增：编辑相关的响应式变量
+const isEditModalOpen = ref(false);
+const editingOrder = ref(null);
+
+// 🌟 新增：删除订单逻辑 (对标 3.2.2.1)
+const deleteOrder = async (orderId) => {
+  if (!confirm('确定要永久删除该订单及其所有明细吗？此操作不可撤销。')) return;
+  try {
+    const res = await fetch(`https://bookstore-backend-60vr.onrender.com/api/admin/orders/${orderId}`, {
+      method: 'DELETE'
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert('订单已删除');
+      fetchOrders(); // 重新刷新列表
+    }
+  } catch (error) {
+    alert('删除失败');
+  }
+};
+
+// 🌟 新增：修改明细数量逻辑 (对标 3.2.2.1)
+const updateDetailQuantity = async (saleId, detailId, newQty) => {
+  try {
+    const res = await fetch(`https://bookstore-backend-60vr.onrender.com/api/admin/orders/${saleId}/details/${detailId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ quantity: newQty })
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert(`数量已更新，新总额为：¥${data.newTotal}`);
+      fetchOrders(); // 刷新以显示最新的订单总价
+    }
+  } catch (error) {
+    alert('修改数量失败');
+  }
 };
 
 onMounted(() => { fetchOrders(); });

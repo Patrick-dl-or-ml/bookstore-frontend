@@ -1,148 +1,172 @@
 <template>
   <div class="max-w-7xl mx-auto py-10 px-6 font-sans relative">
 
-    <div class="absolute top-0 right-0 w-96 h-96 bg-indigo-50 rounded-full blur-[100px] -z-10"></div>
-
     <header class="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
       <div class="flex items-center space-x-4">
-        <h1 class="text-3xl font-black text-gray-900 tracking-tight">Client Relations</h1>
-        <span class="px-3 py-1 bg-gray-900 text-white text-[10px] font-bold rounded-lg uppercase tracking-widest">
-          {{ consumers.length }} Registered
+        <h1 class="text-3xl font-black text-gray-900 tracking-tight">User Directory</h1>
+        <span class="px-3 py-1 bg-indigo-600 text-white text-[10px] font-bold rounded-lg uppercase tracking-widest">
+          {{ users.length }} Active Members
         </span>
-      </div>
-
-      <div class="relative w-full md:w-96 group">
-        <input v-model="searchQuery" type="text" placeholder="Search by name, email or phone..."
-               class="w-full p-4 pl-12 bg-white/60 backdrop-blur-md border border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-100/50 focus:border-indigo-400 transition-all font-bold text-gray-900 shadow-sm" />
-        <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
       </div>
     </header>
 
-    <main class="flex flex-col min-h-[600px]">
-      <div v-if="paginatedConsumers.length === 0" class="py-20 text-center bg-white/50 rounded-3xl border border-dashed border-gray-300">
-        <p class="text-gray-400 font-bold">No clients found matching your query.</p>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 flex-1">
-        <div v-for="user in paginatedConsumers" :key="user.consumer_id"
-             @click="openDetail(user)"
-             class="group p-6 bg-white/60 backdrop-blur-md border border-white hover:border-indigo-100 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col h-fit">
-
-          <div class="flex items-start justify-between mb-4">
+    <main class="bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] shadow-sm overflow-hidden">
+      <table class="w-full text-left border-collapse">
+        <thead>
+        <tr class="border-b border-gray-100">
+          <th class="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">User Details</th>
+          <th class="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status & Tier</th>
+          <th class="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Finances</th>
+          <th class="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="user in users" :key="user.consumer_id" class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors group">
+          <!-- 用户基础信息 & 注册时间 (对标 3.2.1) -->
+          <td class="p-6">
             <div class="flex items-center space-x-4">
-              <div class="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center text-indigo-600 font-black text-xl shadow-inner border border-white">
-                {{ user.consumer_name ? user.consumer_name.charAt(0).toUpperCase() : 'U' }}
+              <div class="h-12 w-12 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center font-black text-gray-400">
+                {{ user.consumer_name.charAt(0).toUpperCase() }}
               </div>
               <div>
-                <h3 class="text-lg font-black text-gray-900 group-hover:text-indigo-600 transition-colors">{{ user.consumer_name || 'Unnamed User' }}</h3>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">ID: {{ String(user.consumer_id).padStart(4, '0') }}</p>
+                <p class="font-black text-gray-900">{{ user.consumer_name }}</p>
+                <p class="text-[10px] font-bold text-gray-400 tracking-wider">Joined: {{ formatTime(user.register_time) }}</p>
               </div>
             </div>
-            <span :class="vipColor(user.vip_level)" class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm border border-white/50">
-              VIP {{ user.vip_level }}
-            </span>
-          </div>
+          </td>
 
-          <div class="mt-auto pt-4 border-t border-gray-100/50 flex justify-between items-end">
-            <div>
-              <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Contact</p>
-              <p class="text-sm font-bold text-gray-600">{{ user.phone || user.email || 'No contact provided' }}</p>
+          <!-- 等级 & 积分 -->
+          <td class="p-6 text-center">
+            <div class="flex flex-col items-center space-y-1">
+                <span :class="getVipClass(user.vip_level)" class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">
+                  {{ getVipName(user.vip_level) }}
+                </span>
+              <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{{ user.integral }} Points</span>
             </div>
-            <div class="text-right">
-              <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Integral</p>
-              <p class="text-lg font-black text-indigo-600">{{ user.integral }}</p>
+          </td>
+
+          <!-- 余额展示与修改 (对标 3.2.1) -->
+          <td class="p-6 text-right">
+            <div class="flex flex-col items-end">
+              <p class="text-sm font-black text-gray-900">¥{{ Number(user.balance || 0).toFixed(2) }}</p>
+              <button @click="openEditBalance(user)" class="text-[9px] font-black text-indigo-600 uppercase tracking-widest hover:underline mt-1">Manage Balance</button>
             </div>
-          </div>
-        </div>
-      </div>
+          </td>
 
-      <div v-if="totalPages > 1" class="flex flex-wrap items-center justify-center gap-2 mt-12 pb-8">
-        <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/60 hover:bg-white text-gray-600 font-black shadow-sm disabled:opacity-40 disabled:hover:bg-white/60 transition-all">
-          ←
-        </button>
-
-        <template v-for="(item, index) in visiblePages" :key="index">
-          <span v-if="item === '...'" class="px-1 text-gray-400 font-black tracking-widest self-end pb-2">...</span>
-          <button v-else @click="changePage(item)"
-                  :class="[currentPage === item ? 'bg-gray-900 text-white scale-110 shadow-lg' : 'bg-white/60 hover:bg-white text-gray-700']"
-                  class="w-10 h-10 rounded-full font-black text-sm flex items-center justify-center shadow-sm transition-all">
-            {{ item }}
-          </button>
-        </template>
-
-        <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/60 hover:bg-white text-gray-600 font-black shadow-sm disabled:opacity-40 disabled:hover:bg-white/60 transition-all">
-          →
-        </button>
-      </div>
+          <!-- 删除操作 (带 3.2.1 安全检查) -->
+          <td class="p-6 text-right">
+            <button @click="deleteUser(user.consumer_id)" class="p-2 text-gray-300 hover:text-red-600 transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            </button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
     </main>
 
-    <Transition name="modal">
-      <div v-if="selectedUser" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-        <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-md" @click="selectedUser = null"></div>
+    <!-- 🌟 余额/等级编辑弹窗 (Modal) -->
+    <div v-if="editUser" class="fixed inset-0 z-[100] flex items-center justify-center p-6">
+      <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-md" @click="editUser = null"></div>
+      <div class="relative bg-white rounded-[2rem] p-8 w-full max-w-md shadow-2xl animate-zoomIn">
+        <h3 class="text-xl font-black text-gray-900 mb-6">Manage User Finance</h3>
 
-        <div class="relative bg-white rounded-[2.5rem] shadow-4xl w-full max-w-4xl overflow-hidden animate-zoomIn flex h-[600px]">
-
-          <div class="w-1/2 p-10 border-r border-gray-100 flex flex-col bg-gray-50/50">
-            <h3 class="text-2xl font-black text-gray-900 mb-8">Profile Editor</h3>
-
-            <div class="space-y-5 flex-1">
-              <div>
-                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Client Name</label>
-                <input v-model="editForm.consumer_name" class="w-full p-4 bg-white border border-gray-100 rounded-xl font-bold text-gray-900 focus:ring-2 focus:ring-indigo-500 outline-none" />
-              </div>
-              <div>
-                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email Address</label>
-                <input v-model="editForm.email" class="w-full p-4 bg-white border border-gray-100 rounded-xl font-bold text-gray-900 outline-none" />
-              </div>
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">VIP Level</label>
-                  <input v-model="editForm.vip_level" type="number" class="w-full p-4 bg-white border border-gray-100 rounded-xl font-bold text-gray-900 outline-none" />
-                </div>
-                <div>
-                  <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Integral Points</label>
-                  <input v-model="editForm.integral" type="number" step="0.01" class="w-full p-4 bg-white border border-gray-100 rounded-xl font-bold text-indigo-600 outline-none" />
-                </div>
-              </div>
-            </div>
-
-            <button @click="handleUpdate" class="w-full py-4 bg-indigo-600 text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-lg hover:bg-indigo-700 transition-all active:scale-95">
-              Save Profile
-            </button>
+        <div class="space-y-4">
+          <div>
+            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Account Balance (¥)</label>
+            <input v-model="editUser.balance" type="number" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl font-black text-gray-900 focus:ring-2 focus:ring-indigo-400 outline-none" />
           </div>
-
-          <div class="w-1/2 p-10 flex flex-col bg-white">
-            <div class="flex justify-between items-end mb-6">
-              <h3 class="text-2xl font-black text-gray-900">Address Book</h3>
-              <span class="text-xs font-bold text-gray-400">{{ userAddresses.length }} records</span>
-            </div>
-
-            <div class="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
-              <div v-if="userAddresses.length === 0" class="py-10 text-center text-gray-400 font-bold text-sm">
-                No addresses saved by this client.
-              </div>
-
-              <div v-for="addr in userAddresses" :key="addr.address_id" class="p-5 border border-gray-100 rounded-2xl bg-gray-50/50 relative">
-                <div v-if="addr.is_default" class="absolute top-4 right-4 text-[9px] font-black text-indigo-500 bg-indigo-50 px-2 py-1 rounded uppercase tracking-widest">Default</div>
-                <p class="font-black text-gray-900 text-lg mb-1">{{ addr.receiver_name }}</p>
-                <p class="text-xs font-bold text-gray-500 mb-3">{{ addr.receiver_phone }}</p>
-                <p class="text-sm font-medium text-gray-700 leading-relaxed">
-                  {{ addr.province }} {{ addr.city }} {{ addr.district }}<br>
-                  {{ addr.detail_address }}
-                </p>
-              </div>
-            </div>
+          <div>
+            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">VIP Tier</label>
+            <select v-model="editUser.vip_level" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl font-black text-gray-900 outline-none">
+              <option :value="0">普通用户</option>
+              <option :value="1">银卡会员</option>
+              <option :value="2">金卡会员</option>
+              <option :value="3">钻石会员</option>
+            </select>
           </div>
+        </div>
 
-          <button @click="selectedUser = null" class="absolute top-6 right-6 w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full text-gray-400 hover:text-gray-900 transition-all">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
+        <div class="flex space-x-4 mt-8">
+          <button @click="editUser = null" class="flex-1 py-4 bg-gray-100 text-gray-400 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-200 transition-all">Cancel</button>
+          <button @click="saveUserChanges" class="flex-1 py-4 bg-gray-900 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 shadow-lg shadow-indigo-100 transition-all">Save Changes</button>
         </div>
       </div>
-    </Transition>
-
+    </div>
   </div>
 </template>
+
+<script setup>
+import { ref, onMounted } from 'vue';
+
+const users = ref([]);
+const editUser = ref(null);
+
+const fetchUsers = async () => {
+  try {
+    const res = await fetch('https://bookstore-backend-60vr.onrender.com/api/admin/consumers');
+    const data = await res.json();
+    if (data.success) users.value = data.data;
+  } catch (error) {
+    console.error('Failed to load users');
+  }
+};
+
+const formatTime = (time) => {
+  if (!time) return 'N/A';
+  return new Date(time).toLocaleDateString();
+};
+
+const getVipName = (level) => {
+  const map = { 0: 'Standard', 1: 'Silver', 2: 'Gold', 3: 'Diamond' };
+  return map[level] || 'Unknown';
+};
+
+const getVipClass = (level) => {
+  if (level === 3) return 'bg-purple-100 text-purple-700 border border-purple-200';
+  if (level === 2) return 'bg-yellow-100 text-yellow-700 border border-yellow-200';
+  if (level === 1) return 'bg-blue-100 text-blue-700 border border-blue-200';
+  return 'bg-gray-100 text-gray-500 border border-gray-200';
+};
+
+const openEditBalance = (user) => {
+  editUser.value = { ...user };
+};
+
+const saveUserChanges = async () => {
+  try {
+    const res = await fetch(`https://bookstore-backend-60vr.onrender.com/api/admin/consumers/${editUser.value.consumer_id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editUser.value)
+    });
+    if ((await res.json()).success) {
+      editUser.value = null;
+      fetchUsers();
+    }
+  } catch (error) {
+    alert('Failed to update');
+  }
+};
+
+// 🌟 核心：带业务检查的删除 (3.2.1)
+const deleteUser = async (id) => {
+  if (!confirm('Are you sure? This action is permanent.')) return;
+  try {
+    const res = await fetch(`https://bookstore-backend-60vr.onrender.com/api/admin/consumers/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) {
+      fetchUsers();
+    } else {
+      // 🌟 如果后端返回“有订单不能删”，这里会弹出提示
+      alert(data.message);
+    }
+  } catch (error) {
+    alert('System error during deletion');
+  }
+};
+
+onMounted(fetchUsers);
+</script>
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';

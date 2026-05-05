@@ -82,7 +82,6 @@
             <th>图书分类</th>
             <th>累计销量 (本)</th>
             <th>创造营收 (元)</th>
-            <th>预估毛利 (元)</th>
           </tr>
           </thead>
           <tbody>
@@ -90,10 +89,10 @@
             <td>{{ item.category }}</td>
             <td>{{ item.total_qty }}</td>
             <td>¥{{ Number(item.total_amount).toFixed(2) }}</td>
-            <td class="highlight-profit">¥{{ (item.total_amount * 0.3).toFixed(2) }}</td>
           </tr>
           <tr v-if="categoryAnalysis.length === 0">
-            <td colspan="4" class="empty-text">暂无品类销售数据</td>
+            <!-- 🌟 这里合并单元格从 4 改成了 3 -->
+            <td colspan="3" class="empty-text">暂无品类销售数据</td>
           </tr>
           </tbody>
         </table>
@@ -130,7 +129,136 @@
         </table>
       </div>
     </div>
-    <!-- 👆 新增结束 👆 -->
+
+
+    <!-- 👇 3.2.3 经营数据实时统计大盘 👇 -->
+    <section class="mt-16">
+      <div class="flex items-center space-x-3 mb-8">
+        <div class="h-8 w-2 bg-indigo-600 rounded-full"></div>
+        <h2 class="text-2xl font-black text-gray-900 tracking-tight">3.2.3 经营数据实时统计</h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        <!-- 畅销图书榜 (3.2.3.3) -->
+        <div class="bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] p-8 shadow-sm">
+          <h3 class="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">🏆 Top Selling Books</h3>
+          <div class="space-y-4">
+            <div v-for="(book, index) in topBooks" :key="index" class="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl">
+              <div class="flex items-center space-x-3">
+                <span class="text-xs font-black text-indigo-400">0{{ index + 1 }}</span>
+                <p class="text-sm font-bold text-gray-900 truncate w-32">{{ book.book_name }}</p>
+              </div>
+              <p class="text-xs font-black text-gray-400">{{ book.total_sold }} Units</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 核心客户榜 (3.2.3.2) -->
+        <div class="bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] p-8 shadow-sm">
+          <h3 class="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">👑 Core Customers</h3>
+          <div class="space-y-4">
+            <div v-for="(user, index) in topCustomers" :key="index" class="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl">
+              <div class="flex items-center space-x-3">
+                <div class="w-2 h-2 rounded-full bg-emerald-400"></div>
+                <p class="text-sm font-bold text-gray-900">{{ user.consumer_name }}</p>
+              </div>
+              <p class="text-xs font-black text-emerald-600">¥{{ user.total_spent }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 物流履约分布 (3.2.3.5) -->
+        <div class="bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] p-8 shadow-sm flex flex-col justify-between">
+          <h3 class="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">🚚 Logistics Status</h3>
+          <div class="grid grid-cols-2 gap-4">
+            <div v-for="item in logisticsStats" :key="item.delivery_status" class="p-4 border border-gray-100 rounded-2xl text-center">
+              <p class="text-2xl font-black text-gray-900">{{ item.count }}</p>
+              <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">{{ item.delivery_status }}</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 👇 3.2.4 销售深度关联分析看板 👇 -->
+    <section class="mt-16">
+      <div class="flex items-center space-x-3 mb-8">
+        <div class="h-8 w-2 bg-purple-600 rounded-full"></div>
+        <h2 class="text-2xl font-black text-gray-900 tracking-tight">3.2.4 销售深度关联分析</h2>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        <!-- 1. 品类销售效能大盘 (保持不变) -->
+        <div class="bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] p-8 shadow-sm">
+          <h3 class="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">📚 品类销售效能</h3>
+          <table class="w-full text-left">
+            <thead>
+            <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
+              <th class="pb-4">图书分类</th>
+              <th class="pb-4 text-center">累计销量</th>
+              <th class="pb-4 text-right">创造营收</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+            <tr v-for="(item, index) in categoryAnalysis" :key="index" class="group">
+              <td class="py-4 text-sm font-bold text-gray-900">{{ item.category }}</td>
+              <td class="py-4 text-sm font-black text-gray-600 text-center">{{ item.total_qty }}</td>
+              <td class="py-4 text-sm font-black text-indigo-600 text-right">¥{{ formatMoney(item.total_amount) }}</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 2. 会员消费力分析 (补全平均余额) -->
+        <div class="bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] p-8 shadow-sm">
+          <h3 class="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">👑 会员消费力与资产分析</h3>
+          <table class="w-full text-left">
+            <thead>
+            <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
+              <th class="pb-4">等级</th>
+              <th class="pb-4 text-right">营收贡献</th>
+              <th class="pb-4 text-right">平均余额</th> <!-- 🌟 新增列 -->
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+            <tr v-for="(vip, index) in vipAnalysis" :key="index">
+              <td class="py-4">
+              <span :class="getVipTagClass(vip.vip_level)" class="px-2 py-1 rounded text-[9px] font-black uppercase tracking-tighter">
+                {{ getVipName(vip.vip_level) }}
+              </span>
+              </td>
+              <td class="py-4 text-sm font-black text-gray-900 text-right">¥{{ formatMoney(vip.total_revenue) }}</td>
+              <td class="py-4 text-sm font-black text-blue-600 text-right">¥{{ formatMoney(vip.avg_balance) }}</td> <!-- 🌟 对应 3.2.1 -->
+            </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 🌟 3. 新增：3.2.4.1 大额订单雷达 (Big Order Radar) -->
+        <div class="xl:col-span-2 bg-gray-900 rounded-[2.5rem] p-8 shadow-2xl text-white">
+          <div class="flex items-center justify-between mb-8">
+            <div>
+              <h3 class="text-lg font-black tracking-tight">大额重点订单监控 (Radar)</h3>
+              <p class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">Monitoring orders > ¥500.00</p>
+            </div>
+            <div class="px-4 py-2 bg-white/10 rounded-xl text-[10px] font-black">LIVE UPDATE</div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div v-for="order in bigOrders" :key="order.sale_id" class="p-5 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all">
+              <p class="text-[9px] font-black text-indigo-400 mb-1">ID #{{ String(order.sale_id).padStart(5, '0') }}</p>
+              <p class="text-xl font-black mb-1">¥{{ formatMoney(order.total_price) }}</p>
+              <p class="text-[10px] font-bold text-gray-500 italic">{{ order.consumer_name }}</p>
+            </div>
+            <div v-if="bigOrders.length === 0" class="col-span-4 py-6 text-center text-gray-600 text-xs font-bold">
+              雷达扫描中：暂未发现异常大额订单
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
   </div>
 </template>
@@ -139,6 +267,8 @@
 import { ref, onMounted } from 'vue';
 
 const isLoading = ref(true);
+
+// 基础统计数据 (3.2.3 概览)
 const stats = ref({
   todayBooks: 0,
   todayRevenue: 0,
@@ -148,21 +278,25 @@ const stats = ref({
   totalBooks: 0
 });
 
-// 🌟新增：定义存放分析数据的响应式变量
-const categoryAnalysis = ref([]);
-const vipAnalysis = ref([]);
+// --- 3.2.3 经营数据统计相关 ---
+const topBooks = ref([]);       // 畅销图书排行
+const topCustomers = ref([]);   // 核心客户排行
+const logisticsStats = ref([]); // 物流履约分布
 
-// 金额格式化小工具，比如把 1234.5 变成 1,234.50
+// --- 3.2.4 深度关联分析相关 ---
+const categoryAnalysis = ref([]); // 品类销售效能
+const vipAnalysis = ref([]);      // 会员消费力分析
+const bigOrders = ref([]);        // 🌟 新增：大额订单雷达 (金额 > 500)
+
 const formatMoney = (val) => {
   return Number(val || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
+// 基础看板数据请求
 const fetchDashboardStats = async () => {
   try {
     const res = await (await fetch('https://bookstore-backend-60vr.onrender.com/api/admin/dashboard/stats')).json();
-    if (res.success) {
-      stats.value = res.data;
-    }
+    if (res.success) stats.value = res.data;
   } catch (error) {
     console.error('Failed to load dashboard data');
   } finally {
@@ -170,42 +304,60 @@ const fetchDashboardStats = async () => {
   }
 };
 
-// 🌟新增：获取品类销售数据
-const fetchCategoryAnalysis = async () => {
+// 3.2.3: 获取图书与客户排行
+const fetchRankings = async () => {
   try {
-    const res = await (await fetch('https://bookstore-backend-60vr.onrender.com/api/admin/analysis/category')).json();
-    if (res.success) {
-      categoryAnalysis.value = res.data;
-    }
+    const [booksRes, customersRes, logisticsRes] = await Promise.all([
+      fetch('https://bookstore-backend-60vr.onrender.com/api/admin/analysis/top-books').then(r => r.json()),
+      fetch('https://bookstore-backend-60vr.onrender.com/api/admin/analysis/top-customers').then(r => r.json()),
+      fetch('https://bookstore-backend-60vr.onrender.com/api/admin/analysis/logistics').then(r => r.json())
+    ]);
+
+    if (booksRes.success) topBooks.value = booksRes.data;
+    if (customersRes.success) topCustomers.value = customersRes.data;
+    if (logisticsRes.success) logisticsStats.value = logisticsRes.data;
   } catch (error) {
-    console.error('获取品类分析失败', error);
+    console.error('获取排行统计失败', error);
   }
 };
 
-// 🌟新增：获取会员消费力数据
-const fetchVipAnalysis = async () => {
+// 3.2.4: 获取品类与会员深度分析
+const fetchDeepAnalysis = async () => {
   try {
-    const res = await (await fetch('https://bookstore-backend-60vr.onrender.com/api/admin/analysis/vip')).json();
+    const [catRes, vipRes] = await Promise.all([
+      fetch('https://bookstore-backend-60vr.onrender.com/api/admin/analysis/category').then(r => r.json()),
+      fetch('https://bookstore-backend-60vr.onrender.com/api/admin/analysis/vip').then(r => r.json())
+    ]);
+
+    if (catRes.success) categoryAnalysis.value = catRes.data;
+    if (vipRes.success) vipAnalysis.value = vipRes.data;
+  } catch (error) {
+    console.error('获取深度分析失败', error);
+  }
+};
+
+// 🌟 3.2.4: 大额订单监控逻辑 (过滤金额 > 500 的单子)
+const fetchBigOrders = async () => {
+  try {
+    const res = await (await fetch('https://bookstore-backend-60vr.onrender.com/api/admin/orders')).json();
     if (res.success) {
-      vipAnalysis.value = res.data;
+      // 筛选出符合文档 3.2.4 定义的“大额订单”
+      bigOrders.value = res.data.filter(order => order.total_price > 500).slice(0, 5);
     }
   } catch (error) {
-    console.error('获取会员分析失败', error);
+    console.error('获取大额订单失败', error);
   }
 };
 
 onMounted(() => {
-  fetchDashboardStats();
-  // 🌟新增：在挂载时同时请求另外两个图表的数据
-  fetchCategoryAnalysis();
-  fetchVipAnalysis();
+  fetchDashboardStats(); // 基础概览
+  fetchRankings();       // 3.2.3 统计
+  fetchDeepAnalysis();   // 3.2.4 分析
+  fetchBigOrders();      // 3.2.4 监控
 });
 </script>
 
 <style scoped>
-/* 确保背景不被影响 */
-
-/* 🌟新增以下全部分析看板样式 */
 .analysis-container {
   display: flex;
   flex-wrap: wrap;
@@ -269,7 +421,6 @@ onMounted(() => {
   font-weight: bold;
 }
 
-/* VIP标签美化 */
 .vip-tag {
   padding: 6px 10px;
   border-radius: 6px;
@@ -278,6 +429,39 @@ onMounted(() => {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
+.analysis-container {
+  @apply mt-12 grid grid-cols-1 xl:grid-cols-2 gap-8;
+}
+
+.analysis-card {
+  @apply bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] p-8 shadow-sm transition-all hover:shadow-md;
+}
+
+.analysis-card h3 {
+  @apply text-sm font-black text-gray-400 uppercase tracking-widest mb-6 flex items-center;
+}
+
+.data-table {
+  @apply w-full text-left border-collapse;
+}
+
+.data-table th {
+  @apply pb-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100;
+}
+
+.data-table td {
+  @apply py-4 text-sm font
+  -bold text-gray-900 border-b border-gray-50/50;
+}
+
+.vip-tag {
+  @apply px-2 py-1 rounded text-[9px] font-black uppercase tracking-tighter shadow-sm;
+}
+.vip-tag.diamond { @apply bg-purple-100 text-purple-700 border border-purple-200; }
+.vip-tag.gold { @apply bg-yellow-100 text-yellow-700 border border-yellow-200; }
+.vip-tag.silver { @apply bg-blue-100 text-blue-700 border border-blue-200; }
+.vip-tag.normal { @apply bg-gray-100 text-gray-500 border border-gray-200; }
 .diamond { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
 .gold { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
 .silver { background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
