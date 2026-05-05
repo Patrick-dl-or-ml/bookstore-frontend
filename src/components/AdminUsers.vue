@@ -166,11 +166,6 @@ const deleteUser = async (id) => {
 };
 
 onMounted(fetchUsers);
-</script>
-
-<script setup>
-import { ref, computed, watch, onMounted } from 'vue';
-
 const consumers = ref([]);
 const searchQuery = ref('');
 const selectedUser = ref(null);

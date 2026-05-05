@@ -306,28 +306,68 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* 🌟 修复关键：清理了会导致 CSS 编译瘫痪的换行，保留你最精简完美的 Tailwind 逻辑 */
+/* 彻底放弃 @apply，使用原生 CSS，100% 避开打包报错，且完美保留你的毛玻璃颜值 */
 .analysis-container {
-  @apply mt-12 grid grid-cols-1 xl:grid-cols-2 gap-8;
+  margin-top: 3rem;
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 2rem;
+}
+
+@media (min-width: 1280px) {
+  .analysis-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .analysis-card {
-  @apply bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] p-8 shadow-sm transition-all hover:shadow-md;
+  background-color: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid white;
+  border-radius: 2.5rem;
+  padding: 2rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.analysis-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .analysis-card h3 {
-  @apply text-sm font-black text-gray-400 uppercase tracking-widest mb-6 flex items-center;
+  font-size: 0.875rem;
+  font-weight: 900;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
 }
 
 .data-table {
-  @apply w-full text-left border-collapse;
+  width: 100%;
+  text-align: left;
+  border-collapse: collapse;
 }
 
 .data-table th {
-  @apply pb-4 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100;
+  padding-bottom: 1rem;
+  font-size: 10px;
+  font-weight: 900;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-bottom: 1px solid #f3f4f6;
 }
 
 .data-table td {
-  @apply py-4 text-sm font-bold text-gray-900 border-b border-gray-50/50;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #111827;
+  border-bottom: 1px solid rgba(249, 250, 251, 0.5);
 }
 </style>
