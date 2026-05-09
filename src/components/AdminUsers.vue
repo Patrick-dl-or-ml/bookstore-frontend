@@ -26,10 +26,10 @@
           <td class="p-6">
             <div class="flex items-center space-x-4">
               <div class="h-12 w-12 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center font-black text-gray-400">
-                {{ user.consumer_name.charAt(0).toUpperCase() }}
+                {{ (user.consumer_name || user.consumername || 'U').charAt(0).toUpperCase() }}
               </div>
               <div>
-                <p class="font-black text-gray-900">{{ user.consumer_name }}</p>
+                <p class="font-black text-gray-900">{{ user.consumer_name || user.consumername || 'Unknown User' }}</p>
                 <p class="text-[10px] font-bold text-gray-400 tracking-wider">Joined: {{ formatTime(user.register_time) }}</p>
               </div>
             </div>
