@@ -161,7 +161,8 @@ const fetchUserProfile = async () => {
   const userId = getCurrentUserId();
   if (!userId) return;
   try {
-    const res = await (await fetch(`https://bookstore-backend-60vr.onrender.com/${userId}/profile`)).json();
+    // 🌟 补全了 /api/users/
+    const res = await (await fetch(`https://bookstore-backend-60vr.onrender.com/api/users/${userId}/profile`)).json();
     if (res.success && res.data) {
       userInfo.value = res.data;
       editForm.value = { consumer_name: res.data.consumer_name, email: res.data.email, phone: res.data.phone };
@@ -177,7 +178,8 @@ const updateProfile = async () => {
   if (!userId) return;
   isSaving.value = true;
   try {
-    const res = await fetch(`https://bookstore-backend-60vr.onrender.com/${userId}/profile`, {
+    // 🌟 补全了 /api/users/
+    const res = await fetch(`https://bookstore-backend-60vr.onrender.com/api/users/${userId}/profile`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(editForm.value)
@@ -194,17 +196,18 @@ const fetchMyOrders = async () => {
   const userId = getCurrentUserId();
   if (!userId) return;
   try {
-    const res = await (await fetch(`https://bookstore-backend-60vr.onrender.com/${userId}/orders`)).json();
+    // 🌟 修改为完全匹配后端的路由 /api/orders/user/
+    const res = await (await fetch(`https://bookstore-backend-60vr.onrender.com/api/orders/user/${userId}`)).json();
     if (res.success) myOrders.value = res.data;
   } catch (err) { console.error('Failed to fetch orders'); }
 };
 
-// 🌟 核心新功能：获取我的地址簿
 const fetchMyAddresses = async () => {
   const userId = getCurrentUserId();
   if (!userId) return;
   try {
-    const res = await (await fetch(`https://bookstore-backend-60vr.onrender.com/${userId}/addresses`)).json();
+    // 🌟 补全了 /api/users/
+    const res = await (await fetch(`https://bookstore-backend-60vr.onrender.com/api/users/${userId}/addresses`)).json();
     if (res.success) myAddresses.value = res.data;
   } catch (err) { console.error('Failed to fetch addresses'); }
 };
