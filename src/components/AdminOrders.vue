@@ -53,7 +53,14 @@
               </span>
             </div>
 
-            <!-- 🌟 新增：删除操作，对应 3.2.2.1 需求 -->
+            <button
+                v-if="order.delivery_status === '未发货' && order.payment_status === '已支付'"
+                @click.stop="dispatchOrder(order.sale_id)"
+                class="mt-2 mr-2 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all border border-emerald-100"
+            >
+              一键发货
+            </button>
+
             <button
                 @click.stop="deleteOrder(order.sale_id)"
                 class="mt-2 px-3 py-1 bg-red-50 text-red-600 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all border border-red-100"
@@ -97,7 +104,6 @@
                   {{ selectedOrder.address_snapshot || 'No shipping address recorded.' }}
                 </div>
 
-                <!-- 🌟 嵌入：实时修改地址功能 (3.2.2.1) -->
                 <div class="pt-4 border-t border-dashed border-gray-100">
                   <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Update Address</p>
                   <textarea
@@ -152,7 +158,6 @@
                   <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Unit: ¥{{ item.unit_price }}</p>
                 </div>
                 <div class="text-right ml-4">
-                  <!-- 🌟 嵌入：修改数量逻辑，自动联动总额重算 (3.2.2.1) -->
                   <div class="flex items-center space-x-2 justify-end mb-1">
                     <span class="text-[9px] font-black text-gray-400">QTY</span>
                     <input
@@ -248,6 +253,27 @@ const openDetail = (order) => {
   fetchOrderDetails(order.sale_id);
 };
 
+// 🌟 新增：列表快捷发货函数
+const dispatchOrder = async (orderId) => {
+  if (!confirm('确定要将该订单标记为已发货吗？')) return;
+  try {
+    const res = await fetch(`https://bookstore-backend-60vr.onrender.com/api/admin/orders/${orderId}/dispatch`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert('发货成功！');
+      fetchOrders(); // 刷新列表状态
+    } else {
+      alert(data.message || '发货失败');
+    }
+  } catch (error) {
+    console.error('发货请求出错:', error);
+    alert('网络或服务器异常');
+  }
+};
+
 const markAsShipped = async () => {
   if (!confirm('Confirm dispatch? The customer will be notified.')) return;
   try {
@@ -264,11 +290,11 @@ const markAsShipped = async () => {
   } catch (err) { alert('Dispatch failed'); }
 };
 
-// 🌟 新增：编辑相关的响应式变量
+// 编辑相关的响应式变量
 const isEditModalOpen = ref(false);
 const editingOrder = ref(null);
 
-// 🌟 新增：删除订单逻辑 (对标 3.2.2.1)
+// 删除订单逻辑 (对标 3.2.2.1)
 const deleteOrder = async (orderId) => {
   if (!confirm('确定要永久删除该订单及其所有明细吗？此操作不可撤销。')) return;
   try {
@@ -285,7 +311,7 @@ const deleteOrder = async (orderId) => {
   }
 };
 
-// 🌟 新增：修改明细数量逻辑 (对标 3.2.2.1)
+// 修改明细数量逻辑 (对标 3.2.2.1)
 const updateDetailQuantity = async (saleId, detailId, newQty) => {
   try {
     const res = await fetch(`https://bookstore-backend-60vr.onrender.com/api/admin/orders/${saleId}/details/${detailId}`, {
